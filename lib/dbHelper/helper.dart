@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path/path.dart';
+import 'package:todolist/model/notes.dart';
 
 class DatabaseHelper {
   static const _databaseName = "Database.db";
@@ -61,12 +62,15 @@ class DatabaseHelper {
 
   ///UPDATING DATABASE
 
-  Future updateTable(Map<String, dynamic>row,) async {
+  Future updateTable(Map<String, dynamic>row, Notes notes) async {
     Database db = await instance.database;
     return await db.update(DatabaseHelper.table, row,
-        where: '${DatabaseHelper.columnisChecked}= ?',
-        whereArgs: [DatabaseHelper.columnId]);
+        where: '${DatabaseHelper.columnId}= ?',
+        whereArgs: [notes.id]);
   }
+
+
+  /// DELETING FROM DATABASE
 
 
 }

@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
 import 'package:todolist/dbHelper/helper.dart';
 import 'package:todolist/model/notes.dart';
-import 'package:todolist/model/notes_provider.dart';
+
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key key}) : super(key: key);
@@ -20,14 +20,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
   List<Notes> _list = [];
 
-
   @override
-  void initState() {
-    // TODO: implement initState
-    super.initState();
-    fetch();
-  }
-
   @override
   Widget build(BuildContext context) {
     return SafeArea(
@@ -35,46 +28,31 @@ class _HomeScreenState extends State<HomeScreen> {
       appBar: AppBar(),
       body: Column(
         children: [
-          // Expanded(
-          //   child: Consumer<NotesProvider>(
-          //     builder: (context, NotesProvider data, _) {
-          //       return ListView.separated(
-          //         itemCount: data.getNotes().length,
-          //         itemBuilder: (context, index) {
-          //           return Container(
-          //             child: _cardList(data.getNotes()[index], index),
-          //           );
-          //         },
-          //         separatorBuilder: (context, index) {
-          //           return Divider(
-          //             height: 2,
-          //           );
-          //         },
-          //       );
-          //     },
-          //   ),
-          // ),
-
           Expanded(
             child: ListView.separated(
               itemCount: _list.length,
               itemBuilder: (context, index) {
-
-                var checked =_list[index].isChecked;
+                var checked = _list[index].isChecked;
                 return ListTile(
                     leading: Checkbox(
-                      value:checked==2?true:false,
+                      value: checked == 2 ? true : false,
                       onChanged: (val) {
                         setState(() {
-                           checked=checked;
-                           _update();
+                          checked = checked;
+                          _update(_list[index]);
                         });
                       },
                     ),
                     title: Text(_list[index]?.tittle ?? ''),
-                    subtitle: Text(_list[index]?.description ??''),
-
-                );
+                    subtitle: Text(_list[index]?.description ?? ''),
+                    trailing: Column(
+                      mainAxisAlignment: MainAxisAlignment.start,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                            "At Time : ${DateFormat("hh:mm:ss ").format(DateTime.now())}"),
+                      ],
+                    ));
               },
               separatorBuilder: (context, index) {
                 return Divider(
@@ -126,7 +104,6 @@ class _HomeScreenState extends State<HomeScreen> {
                 fetch();
                 // Provider.of<NotesProvider>(context, listen: false)
                 //     .addNotes(tittlecntrl.text, desccntrl.text, null);
-
                 Navigator.pop(context);
               },
             ),
@@ -136,35 +113,57 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
+  /// INSERTING TO DATABASE FUNCTION
   Future<void> _insert() async {
     Map<String, dynamic> row = {
       DatabaseHelper.columnTittle: tittlecntrl.text,
       DatabaseHelper.columnDescription: desccntrl.text,
       DatabaseHelper.columnisChecked: 1
     };
-    final id = await dbHelper.insert(row);
-    print('///  $id');
+    await dbHelper.insert(row);
+    print('/// DATABASE INSERT  $row');
     return;
   }
 
-
-  Future<void> _update() async {
+  /// UPDATING INTO DATABASE
+  Future<void> _update(
+    Notes notes,
+  ) async {
     Map<String, dynamic> row = {
-      DatabaseHelper.columnisChecked:'2'
+      DatabaseHelper.columnisChecked: notes.isChecked == 1 ? 2 : 1,
+
+      /// updating condition used for database  if isCheked value is 1 then update it to 2 else remain 1
+      DatabaseHelper.columnId: notes.id,
+      DatabaseHelper.columnDescription: notes.description,
+      DatabaseHelper.columnTittle: notes.tittle,
     };
-    final update = await dbHelper.updateTable(row);
-     print('/// UPDATE $update');
+
+    /// getting  for databse query and updating
+    final update = await dbHelper.updateTable(row, notes);
+    print('/// DATABASE UPDATE $update');
+    fetch();
+
+    /// after udation fetching the database
+
     return;
   }
 
-
-
+  /// Fetching Data by querying and Binding in list
   fetch() async {
     final allRows = await dbHelper.queryAllRows();
+    _list = [];
     allRows.forEach((row) {
-      _list.add(Notes(row["tittle"], row["Description"], row["key"],row["isChecked"]));
-      print(row);
+      _list.add(Notes(
+
+          /// Binding in _list of data from database
+          row["tittle"],
+          row["Description"],
+          row['_id'],
+          row["isChecked"]));
+      print('///FETCH  DATABASE  $row');
+      setState(() {});
+
+      /// setState to update UI
     });
-    setState(() {});
   }
 }

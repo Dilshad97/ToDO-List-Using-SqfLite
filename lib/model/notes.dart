@@ -1,8 +1,8 @@
 class Notes {
   String tittle;
   String description;
-  int key;
+  int id;
   int isChecked;
 
-  Notes(this.tittle, this.description, this.key,this.isChecked);
+  Notes(this.tittle, this.description, this.id,this.isChecked);
 }
