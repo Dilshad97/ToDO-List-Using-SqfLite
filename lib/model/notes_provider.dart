@@ -9,22 +9,7 @@ class NotesProvider extends ChangeNotifier {
     return _notes;
   }
 
-  // void removeNotes(int index) {
-  //   _notes.removeAt(index);
-  //   notifyListeners();
-  // }
-  //
-  // void addNotes(String tittle, String description, int id, int isChecked) {
-  //   Notes note = Notes(
-  //     tittle,
-  //     description,
-  //     id,
-  //     isChecked,
-  //   );
-  //   _notes.add(note);
-  //   notifyListeners();
-  // }
-
+  /// Insert query for database
   Future<void> insertTable(String tittlecntrl, String desccntrl) async {
     Map<String, dynamic> row = {
       DatabaseHelper.columnTittle: tittlecntrl,
@@ -38,8 +23,6 @@ class NotesProvider extends ChangeNotifier {
   }
 
   final dbHelper = DatabaseHelper.instance;
-
-
 
   /// Fetching Data by querying and Binding in list
   Future<void> fetchTable() async {
@@ -61,8 +44,11 @@ class NotesProvider extends ChangeNotifier {
       notifyListeners();
     });
   }
+
   /// UPDATING INTO DATABASE
-  Future<void> updateTable(Notes notes,) async {
+  Future<void> updateTable(
+    Notes notes,
+  ) async {
     Map<String, dynamic> row = {
       /// updating condition used for database  if isCheked value is 1 then update it to 2 else remain 1
       DatabaseHelper.columnisChecked: notes.isChecked == 1 ? 2 : 1,
@@ -73,7 +59,7 @@ class NotesProvider extends ChangeNotifier {
     final update = await dbHelper.updateTable(row, notes);
     print('/// DATABASE UPDATE $update');
 
-    /// after udation fetching the database
+    /// after updation fetching the database for updated result
     fetchTable();
     notifyListeners();
     return;
@@ -81,17 +67,18 @@ class NotesProvider extends ChangeNotifier {
 
   /// Deleting form Database
 
-Future<void> deleteTable(Notes notes,) async {
-  Map<String, dynamic> row = {
-    DatabaseHelper.columnisChecked: notes.isChecked,
-    DatabaseHelper.columnId: notes.id,
-    DatabaseHelper.columnDescription: notes.description,
-    DatabaseHelper.columnTittle: notes.tittle,
-  };
+  Future<void> deleteTable(
+    Notes notes,
+  ) async {
+    Map<String, dynamic> row = {
+      DatabaseHelper.columnisChecked: notes.isChecked,
+      DatabaseHelper.columnId: notes.id,
+      DatabaseHelper.columnDescription: notes.description,
+      DatabaseHelper.columnTittle: notes.tittle,
+    };
 
-  final delete = await dbHelper.deleteTable(row, notes);
-  print('/// DATABASE UPDATE $delete');
-  fetchTable();
-}
-
+    final delete = await dbHelper.deleteTable(row, notes);
+    print('/// DATABASE UPDATE $delete');
+    fetchTable();
+  }
 }
