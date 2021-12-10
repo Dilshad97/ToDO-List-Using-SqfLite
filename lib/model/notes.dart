@@ -4,5 +4,6 @@ class Notes {
   int id;
   int isChecked;
 
-  Notes(this.tittle, this.description, this.id,this.isChecked);
+
+  Notes(this.tittle, this.description, this.id,this.isChecked,);
 }

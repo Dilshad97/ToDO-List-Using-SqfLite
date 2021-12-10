@@ -72,12 +72,7 @@ class DatabaseHelper {
 
   Future deleteTable(Map<String, dynamic> row, Notes notes) async {
     Database db = await instance.database;
-    return await db.delete(table);
+    return await db.delete(DatabaseHelper.table,
+        where: '${DatabaseHelper.columnId}= ?', whereArgs: [notes.id]);
   }
-
-
-
-
-
-
 }

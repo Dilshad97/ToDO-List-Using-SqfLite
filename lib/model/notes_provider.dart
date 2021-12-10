@@ -13,8 +13,8 @@ class NotesProvider extends ChangeNotifier {
     notifyListeners();
   }
 
-  void addNotes(String tittle, String description, int key, int isChecked) {
-    Notes note = Notes(tittle, description, key,isChecked);
+  void addNotes(String tittle, String description, int id, int isChecked) {
+    Notes note = Notes(tittle, description, id, isChecked, );
     _notes.add(note);
     notifyListeners();
   }
