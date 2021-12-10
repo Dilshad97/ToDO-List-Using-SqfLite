@@ -62,15 +62,22 @@ class DatabaseHelper {
 
   ///UPDATING DATABASE
 
-  Future updateTable(Map<String, dynamic>row, Notes notes) async {
+  Future updateTable(Map<String, dynamic> row, Notes notes) async {
     Database db = await instance.database;
     return await db.update(DatabaseHelper.table, row,
-        where: '${DatabaseHelper.columnId}= ?',
-        whereArgs: [notes.id]);
+        where: '${DatabaseHelper.columnId}= ?', whereArgs: [notes.id]);
+  }
+
+  /// DELETING FROM DATABASE
+
+  Future deleteTable(Map<String, dynamic> row, Notes notes) async {
+    Database db = await instance.database;
+    return await db.delete(table);
   }
 
 
-  /// DELETING FROM DATABASE
+
+
 
 
 }

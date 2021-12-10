@@ -1,8 +1,10 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_slidable/flutter_slidable.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import 'package:todolist/dbHelper/helper.dart';
 import 'package:todolist/model/notes.dart';
-
+import 'package:todolist/model/notes_provider.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key key}) : super(key: key);
@@ -12,13 +14,19 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  // bool value = false;
   final dbHelper = DatabaseHelper.instance;
 
   TextEditingController tittlecntrl = TextEditingController();
   TextEditingController desccntrl = TextEditingController();
 
   List<Notes> _list = [];
+
+  @override
+  void initState() {
+    // TODO: implement initState
+    super.initState();
+    fetch();
+  }
 
   @override
   @override
@@ -29,38 +37,55 @@ class _HomeScreenState extends State<HomeScreen> {
       body: Column(
         children: [
           Expanded(
-            child: ListView.separated(
-              itemCount: _list.length,
-              itemBuilder: (context, index) {
+              child: ListView.builder(
+            itemCount: _list.length,
+            itemBuilder: (context, index) {
+              if (_list[index] != null) {
                 var checked = _list[index].isChecked;
-                return ListTile(
-                    leading: Checkbox(
-                      value: checked == 2 ? true : false,
-                      onChanged: (val) {
-                        setState(() {
-                          checked = checked;
-                          _update(_list[index]);
-                        });
-                      },
+                return Padding(
+                  padding: const EdgeInsets.only(left: 8.0, right: 8.0, top: 4),
+                  child: Dismissible(
+                    background: Icon(
+                      Icons.delete,
+                      size: 40,
+                      color: Colors.red,
                     ),
-                    title: Text(_list[index]?.tittle ?? ''),
-                    subtitle: Text(_list[index]?.description ?? ''),
-                    trailing: Column(
-                      mainAxisAlignment: MainAxisAlignment.start,
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                            "At Time : ${DateFormat("hh:mm:ss ").format(DateTime.now())}"),
-                      ],
-                    ));
-              },
-              separatorBuilder: (context, index) {
-                return Divider(
-                  color: Colors.red,
+                    key: UniqueKey(),
+                    onDismissed: (direction) {
+                      setState(() {
+                        _delete(_list.removeAt(index));
+                      });
+                    },
+                    child: Card(
+                      child: ListTile(
+                          leading: Checkbox(
+                            value: checked == 2 ? true : false,
+                            onChanged: (val) {
+                              setState(() {
+                                checked = checked;
+                                _update(_list[index]);
+                              });
+                            },
+                          ),
+                          title: Text(_list[index]?.tittle ?? ''),
+                          subtitle: Text(_list[index]?.description ?? ''),
+                          trailing: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                  "Created : ${DateFormat("dd-MM-yyyy").format(DateTime.now())}"),
+                              Text(
+                                  "At Time : ${DateFormat("hh:mm:ss ").format(DateTime.now())}"),
+                            ],
+                          )),
+                    ),
+                  ),
                 );
-              },
-            ),
-          ),
+              } else {
+                return Text("ADD NOTES");
+              }
+            },
+          )),
           ElevatedButton(
               onPressed: () {
                 _showAlerEmailtDialog();
@@ -75,39 +100,55 @@ class _HomeScreenState extends State<HomeScreen> {
     showDialog(
       context: context,
       builder: (BuildContext context) {
-        return AlertDialog(
-          title: Text('ADD NOTES'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              TextField(
-                controller: tittlecntrl,
-                decoration: InputDecoration(
-                    filled: true,
-                    fillColor: Colors.transparent,
-                    hintText: "Tittle Here..."),
-              ),
-              TextField(
-                controller: desccntrl,
-                decoration: InputDecoration(
-                    filled: true,
-                    fillColor: Colors.transparent,
-                    hintText: "Description Here"),
+        return SingleChildScrollView(
+          child: AlertDialog(
+            title: Text('ADD NOTES'),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: tittlecntrl,
+                  decoration: InputDecoration(
+                    contentPadding: EdgeInsets.all(10),
+                    border: OutlineInputBorder(
+                      borderSide: BorderSide(),
+                      borderRadius: BorderRadius.circular(10)
+                    ),
+                      filled: true,
+                      labelText: "Tittle",
+                      fillColor: Colors.transparent,
+                      hintText: "Tittle Here..."),
+                ),
+                SizedBox(height: 15,),
+                TextField(
+                  keyboardType: TextInputType.multiline,
+                  maxLines: 12,
+                  controller: desccntrl,
+                  decoration: InputDecoration(
+               border: OutlineInputBorder(
+                 borderSide: BorderSide(color: Colors.red),
+                 borderRadius: BorderRadius.circular(10)
+               ),
+                      filled: true,
+                      labelText: "Description",
+                      fillColor: Colors.grey.shade300,
+                      hintText: "Description Here"),
+                ),
+              ],
+            ),
+            actions: <Widget>[
+              FlatButton(
+                child: Text('ADD'),
+                onPressed: () async {
+                  await _insert();
+                  fetch();
+                  // Provider.of<NotesProvider>(context, listen: false)
+                  //     .addNotes(tittlecntrl.text, desccntrl.text, null);
+                  Navigator.pop(context);
+                },
               ),
             ],
           ),
-          actions: <Widget>[
-            FlatButton(
-              child: Text('ADD'),
-              onPressed: () async {
-                await _insert();
-                fetch();
-                // Provider.of<NotesProvider>(context, listen: false)
-                //     .addNotes(tittlecntrl.text, desccntrl.text, null);
-                Navigator.pop(context);
-              },
-            ),
-          ],
         );
       },
     );
@@ -121,6 +162,8 @@ class _HomeScreenState extends State<HomeScreen> {
       DatabaseHelper.columnisChecked: 1
     };
     await dbHelper.insert(row);
+    desccntrl.clear();
+    tittlecntrl.clear();
     print('/// DATABASE INSERT  $row');
     return;
   }
@@ -130,20 +173,17 @@ class _HomeScreenState extends State<HomeScreen> {
     Notes notes,
   ) async {
     Map<String, dynamic> row = {
-      DatabaseHelper.columnisChecked: notes.isChecked == 1 ? 2 : 1,
-
       /// updating condition used for database  if isCheked value is 1 then update it to 2 else remain 1
+      DatabaseHelper.columnisChecked: notes.isChecked == 1 ? 2 : 1,
       DatabaseHelper.columnId: notes.id,
       DatabaseHelper.columnDescription: notes.description,
       DatabaseHelper.columnTittle: notes.tittle,
     };
-
-    /// getting  for databse query and updating
     final update = await dbHelper.updateTable(row, notes);
     print('/// DATABASE UPDATE $update');
-    fetch();
 
     /// after udation fetching the database
+    fetch();
 
     return;
   }
@@ -165,5 +205,20 @@ class _HomeScreenState extends State<HomeScreen> {
 
       /// setState to update UI
     });
+  }
+
+  /// Deleting form Database
+
+  Future<void> _delete(Notes notes) async {
+    Map<String, dynamic> row = {
+      DatabaseHelper.columnisChecked: notes.isChecked,
+      DatabaseHelper.columnId: notes.id,
+      DatabaseHelper.columnDescription: notes.description,
+      DatabaseHelper.columnTittle: notes.tittle,
+    };
+
+    final delete = await dbHelper.deleteTable(row, notes);
+    print('/// DATABASE UPDATE $delete');
+    fetch();
   }
 }
